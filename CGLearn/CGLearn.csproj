@@ -47,6 +47,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CG\Camera.cs" />
+    <Compile Include="CG\Clip.cs" />
     <Compile Include="CG\Matrix.cs" />
     <Compile Include="CG\Scene.cs" />
     <Compile Include="CG\Triangle.cs" />

@@ -25,7 +25,7 @@ namespace CGLearn.CG
 
         public double den;
 
-        public Matrix transform;
+        //public Matrix transform;
 
         public void SetVector1(Vector p, Vector value)
         {
