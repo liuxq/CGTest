@@ -30,10 +30,8 @@ namespace CGLearn.CG
         int height_;
         Matrix worldTransformation_;
 
-        int showMode = 1;//0:line, 1:color, 2:texture
+        int showMode = 0;//0:line, 1:color, 2:texture
         bool isLight = false;
-        bool isPerspective = true;
-        double scale = 1.0;
 
         Bitmap texture = new Bitmap("env2.bmp");
         BitmapData texData;
@@ -51,17 +49,9 @@ namespace CGLearn.CG
         {
             showMode = (showMode + 1) % 3;
         }
-        public void SwitchCameraMode()
-        {
-            isPerspective = !isPerspective;
-        }
         public void SwitchLight()
         {
             isLight = !isLight;
-        }
-        public void ChangeScale(double alpha)
-        {
-            scale *= alpha;
         }
 
         public Scene3D()
@@ -130,7 +120,6 @@ namespace CGLearn.CG
         Vector ProjectPoint(Vector p, Matrix projectionMatrix)
         {
             Vector projected = p.Transform(projectionMatrix);
-            projected.z_ = -projected.z_;
             projected.y_ = Math.Floor(projected.y_);
             projected.x_ = Math.Floor(projected.x_);
            
@@ -159,7 +148,7 @@ namespace CGLearn.CG
             Vector dir13 = t2.p1_ - t2.p3_;
             dir12.z_ = 0;
             dir13.z_ = 0;
-            return dir12.Cross(dir13).z_ > 0;
+            return dir12.Cross(dir13).z_ < 0;
         }
         public void DrawProjectedTriangle(BitmapData data, Triangle3D t,
                 Matrix transformationMatrix, Camera camera)
@@ -291,7 +280,7 @@ namespace CGLearn.CG
             texData = texture.LockBits(new Rectangle(0, 0, texture.Width, texture.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb);
             for (int i = 0; i < triangles_.Count; i++)
             {
-                DrawProjectedTriangle(data, triangles_[i], P * MV, camera);
+                DrawProjectedTriangle(data, triangles_[i], P*MV, camera);
             }
             texture.UnlockBits(texData);
             image.UnlockBits(data);
@@ -300,16 +289,11 @@ namespace CGLearn.CG
         public void Render(Graphics graphics, Bitmap graph, int width, int height, Camera camera, Matrix worldTransform)
         {
             graphics.Clear(Color.Black);
-            graphics.DrawString("W 切换显示模式（线框、填充、纹理）\nL 开关光照\nC 切换投影方式（正交、透视）\n鼠标控制旋转和缩放", drawFont, drawBrush, 0,0);
+            graphics.DrawString("W 切换显示模式（线框、填充、纹理）\nL 开关光照\n鼠标控制旋转和缩放", drawFont, drawBrush, 0,0);
             ClearBuffer();
             int m = Math.Min(width, height);
             Matrix MV = camera.GetViewMatrix() * worldTransform;
-            Matrix P = null;
-            if(isPerspective)
-                P = Matrix.CreatePerspectiveProjectionMatrix2(width / 2, height / 2, (int)(m * scale), (int)(m * scale), 1.1, 1, 1, 100);
-            else
-                P = Matrix.CreateOrthogonalProjectionMatrix(width / 2, height / 2, (int)(m * scale/3), (int)(m * scale/3));
-
+            Matrix P = Matrix.CreatePerspectiveProjectionMatrix2(width / 2, height / 2, m , m, 1.1, 1, 1, 15);
             DrawScene(graph, MV, P, camera);
         }
         static void Swap<T>(ref T a, ref T b)
@@ -401,7 +385,8 @@ namespace CGLearn.CG
                     {
                         double betax = (xLeft_int == xRight_int) ? 1 : ((double)x - xRight_int) / (xLeft_int - xRight_int);
                         double z = betax * zl + (1 - betax) * zr;
-                        if (x >= 0 && y >= 0 && x < width_ && y < height_ && z < zBuffer_[x, y])
+
+                        if (x >= 0 && y >= 0 && x < width_ && y < height_ && z < zBuffer_[x, y] && z <= 1 && z >= -1)
                         {
                             zBuffer_[x,y] = z;
                             StVector cur;
@@ -417,7 +402,7 @@ namespace CGLearn.CG
                                 StVector projectP;
                                 projectP.x_ = x;
                                 projectP.y_ = y;
-                                projectP.z_ = -z;
+                                projectP.z_ = z;
                                 StVector P = inverseTransform * projectP;
                                 P = texInterpolator.transform * P;
 

@@ -72,7 +72,7 @@ namespace CGLearn
             scene.AddTriangle(0, 7, 4); scene.GetTriangle(10).SetTextureCoordinates(new Vector(1, 0, 0), new Vector(0, 1, 0), new Vector(1, 1, 0));
             scene.AddTriangle(0, 3, 7); scene.GetTriangle(11).SetTextureCoordinates(new Vector(1, 0, 0), new Vector(0, 0, 0), new Vector(0, 1, 0));
 
-            camera = new Camera(new Vector(0, 0, 5), new Vector(0,1,0), new Vector(0,0,0), 0, 100);
+            camera = new Camera(new Vector(0, 0, -5), new Vector(0,1,0), new Vector(0,0,0), 0, 100);
 
             scene.Init(this.ClientRectangle.Width, this.ClientRectangle.Height);
             scene.Render(graph, theImage, this.ClientRectangle.Width, this.ClientRectangle.Height, camera, worldTransform);
@@ -98,7 +98,7 @@ namespace CGLearn
                 if(Math.Abs(deltaX) > 2 || Math.Abs(deltaY) > 2)
                 {
                     worldTransform = Matrix.CreateYAxisRotationMatrix(deltaX / 400.0) * worldTransform;
-                    worldTransform = Matrix.CreateXAxisRotationMatrix(-deltaY / 400.0) * worldTransform;
+                    worldTransform = Matrix.CreateXAxisRotationMatrix(deltaY / 400.0) * worldTransform;
 
                     scene.Render(graph, theImage, this.ClientRectangle.Width, this.ClientRectangle.Height, camera, worldTransform);
                     Invalidate(false);
@@ -129,12 +129,6 @@ namespace CGLearn
                 scene.Render(graph, theImage, this.ClientRectangle.Width, this.ClientRectangle.Height, camera, worldTransform);
                 Invalidate(false);
             }
-            else if(e.KeyCode == Keys.C)
-            {
-                scene.SwitchCameraMode();
-                scene.Render(graph, theImage, this.ClientRectangle.Width, this.ClientRectangle.Height, camera, worldTransform);
-                Invalidate(false);
-            }
             else if (e.KeyCode == Keys.L)
             {
                 scene.SwitchLight();
@@ -147,13 +141,15 @@ namespace CGLearn
         {
             if(e.Delta > 0)
             {
-                scene.ChangeScale(1.1);
+                if(camera.position.z_ < -2.2)
+                    camera.position.z_ += .3;
                 scene.Render(graph, theImage, this.ClientRectangle.Width, this.ClientRectangle.Height, camera, worldTransform);
                 Invalidate(false);
             }
             else
             {
-                scene.ChangeScale(0.9);
+                if (camera.position.z_ > -20)
+                    camera.position.z_ -= .3;
                 scene.Render(graph, theImage, this.ClientRectangle.Width, this.ClientRectangle.Height, camera, worldTransform);
                 Invalidate(false);
             }

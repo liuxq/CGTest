@@ -290,35 +290,37 @@ namespace CGLearn.CG
                     0, 0, 0, 1);
         }
 
-        static public Matrix CreatePerspectiveProjectionMatrix2(int x, int y, int viewportWidth, int viewportHeight, double viewAngleRad,
+        static public Matrix CreatePerspectiveProjectionMatrix2(int x, int y, int viewportWidth, int viewportHeight, double fovy,
                 double aspect, double znear, double zfar)
         {
             Matrix result = new Matrix(4, 4);
-            double yScale = 1.0 / Math.Tan(viewAngleRad * 0.5);
-            double xScale = yScale / aspect;
-
-            double halfWidth = znear / xScale;
-            double halfHeight = znear / yScale;
-            double left = -halfWidth;
-            double right = halfWidth;
-            double bottom = -halfHeight;
-            double top = halfHeight;
-
-            double zRange = zfar / (zfar - znear);
-
-            result.SetElement(0, 0, 2 * znear / (right - left));
-            result.SetElement(1, 1, 2 * znear / (top - bottom));
-            result.SetElement(2, 2, -(zfar + znear) / (zfar - znear));
-            result.SetElement(2, 3, -2 * znear * zfar / (zfar - znear));
-            result.SetElement(3, 2, -1);
+            double f = 1.0 / Math.Tan(fovy / 2),
+            nf = 1 / (znear - zfar);
+            result.matrix_[0] = f / aspect;
+            result.matrix_[1] = 0;
+            result.matrix_[2] = 0;
+            result.matrix_[3] = 0;
+            result.matrix_[4] = 0;
+            result.matrix_[5] = f;
+            result.matrix_[6] = 0;
+            result.matrix_[7] = 0;
+            result.matrix_[8] = 0;
+            result.matrix_[9] = 0;
+            result.matrix_[10] = (zfar + znear) * nf;
+            result.matrix_[11] = (2 * zfar * znear) * nf; 
+            result.matrix_[12] = 0;
+            result.matrix_[13] = 0;
+            result.matrix_[14] = -1;
+            result.matrix_[15] = 0;
+            //return result;
 
             return CreateTranslationMatrix(x, y, 0) * CreateScaleMatrix(viewportWidth / 2, viewportHeight / 2, 1)* result;
         }
 
         static public Matrix CreateViewMatrix(Vector cameraPosition, Vector observedPoint, Vector upDirection)
         {
-            Vector cameraVector = new Vector(0, 0, 0) - cameraPosition;
-            Vector zAxis = (observedPoint - cameraVector).Normalize();
+            Vector cameraVector = cameraPosition;
+            Vector zAxis = (cameraVector - observedPoint ).Normalize();
             Vector xAxis = upDirection.Cross(zAxis).Normalize();
             Vector yAxis = zAxis.Cross(xAxis).Normalize();
 
