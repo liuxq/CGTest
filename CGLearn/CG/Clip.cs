@@ -36,9 +36,27 @@ namespace CGLearn.CG
             }
             else if (clipBoundary == 2)
             {
-                I.x_ = -1;
-                I.y_ = s.y_ + (-1 - s.x_) * (p.y_ - s.y_) / (p.x_ - s.x_);
-                I.z_ = s.z_ + (-1 - s.x_) * (p.z_ - s.z_) / (p.x_ - s.x_);
+                I.y_ = 1;
+                I.x_ = s.x_ + (1 - s.y_) * (p.x_ - s.x_) / (p.y_ - s.y_);
+                I.z_ = s.z_ + (1 - s.y_) * (p.z_ - s.z_) / (p.y_ - s.y_);
+            }
+            else if (clipBoundary == 3)
+            {
+                I.y_ = -1;
+                I.x_ = s.x_ + (-1 - s.y_) * (p.x_ - s.x_) / (p.y_ - s.y_);
+                I.z_ = s.z_ + (-1 - s.y_) * (p.z_ - s.z_) / (p.y_ - s.y_);
+            }
+            else if (clipBoundary == 4)
+            {
+                I.z_ = 1;
+                I.x_ = s.x_ + (1 - s.z_) * (p.x_ - s.x_) / (p.z_ - s.z_);
+                I.y_ = s.y_ + (1 - s.z_) * (p.y_ - s.y_) / (p.z_ - s.z_);
+            }
+            else if (clipBoundary == 5)
+            {
+                I.z_ = -1;
+                I.x_ = s.x_ + (-1 - s.z_) * (p.x_ - s.x_) / (p.z_ - s.z_);
+                I.y_ = s.y_ + (-1 - s.z_) * (p.y_ - s.y_) / (p.z_ - s.z_);
             }
 
             return I;
@@ -47,7 +65,7 @@ namespace CGLearn.CG
         {
             return (testVertex - points[clipBoundary]).Dot(points[clipBoundary]) <= 0;
         }
-        void SutherlandHodgmanPolygonClip(List<Vector> inPoints, List<Vector> outPoints, int clipBoundary)
+        public void SutherlandHodgmanPolygonClip(List<Vector> inPoints, List<Vector> outPoints, int clipBoundary)
         {
             if (inPoints.Count == 0)
                 return;

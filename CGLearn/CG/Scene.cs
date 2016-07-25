@@ -40,10 +40,13 @@ namespace CGLearn.CG
 
         Triangle3DInterpolator texInterpolator = new Triangle3DInterpolator();
 
+        Clip clipManager = new Clip();
+
         Font drawFont = new Font("宋体", 16);
         SolidBrush drawBrush = new SolidBrush(Color.White);
 
-        Matrix inverseTransform;
+        Matrix inverseMVPVTransform;
+        Matrix inverseMVPTransform;
 
         public void SwitchShowMode()
         {
@@ -58,6 +61,7 @@ namespace CGLearn.CG
         {
             worldTransformation_ = new Matrix(4,4);
             worldTransformation_ = Matrix.CreateIdentityMatrix(4);
+            clipManager.Init();
         }
 
         ~Scene3D()
@@ -150,39 +154,136 @@ namespace CGLearn.CG
             dir13.z_ = 0;
             return dir12.Cross(dir13).z_ < 0;
         }
-        public void DrawProjectedTriangle(BitmapData data, Triangle3D t,
-                Matrix transformationMatrix, Camera camera)
+        List<Triangle> clip(Triangle tr, Matrix mvp)
         {
-            Triangle2D t2 = ProjectTriangle(t, transformationMatrix);
+            List<Triangle> triangles = new List<Triangle>();
+            List<Vector> inPoints = new List<Vector>();
+            List<Vector> outPoints = new List<Vector>();
+            inPoints.Add(mvp * tr.p1_);
+            inPoints.Add(mvp * tr.p2_);
+            inPoints.Add(mvp * tr.p3_);
+
+            //设置颜色插值参数
+            Triangle3DInterpolator interpolator = new Triangle3DInterpolator();
+            interpolator.SetVector1(inPoints[0], tr.p1Color);
+            interpolator.SetVector2(inPoints[1], tr.p2Color);
+            interpolator.SetVector3(inPoints[2], tr.p3Color);
+            interpolator.PreCalculate();
+
+            Triangle3DInterpolator texinterpolator = new Triangle3DInterpolator();
+            texinterpolator.SetVector1(tr.p1_, tr.p1TextureCordinates_);
+            texinterpolator.SetVector2(tr.p2_, tr.p2TextureCordinates_);
+            texinterpolator.SetVector3(tr.p3_, tr.p3TextureCordinates_);
+            texinterpolator.PreCalculate();
+
+            for (int i = 0; i < 6; i++)
+            {
+                clipManager.SutherlandHodgmanPolygonClip(inPoints, outPoints, i);
+                List<Vector> t = outPoints;
+                outPoints = inPoints;
+                inPoints = t;
+                outPoints.Clear();
+            }
+
+            if (inPoints.Count < 3)
+                return triangles;
+
+            List<Vector> colors = new List<Vector>();
+            List<Vector> texs = new List<Vector>();
+            for (int i = 0; i < inPoints.Count; i++ )
+            {
+                Vector P = interpolator.transform * inPoints[i];
+
+                double cl1 = (interpolator.p2y_p3y * (P.x_ - interpolator.p3_.x_) + (interpolator.p3x_p2x) * (P.y_ - interpolator.p3_.y_)) * interpolator.den;
+                double cl2 = ((interpolator.p3y_p1y) * (P.x_ - interpolator.p3_.x_) + (interpolator.p1x_p3x) * (P.y_ - interpolator.p3_.y_)) * interpolator.den;
+                double cl3 = 1 - cl1 - cl2;
+
+                double x = tr.p1Color.x_ * cl1 + tr.p2Color.x_ * cl2 + tr.p3Color.x_ * cl3;
+                double y = tr.p1Color.y_ * cl1 + tr.p2Color.y_ * cl2 + tr.p3Color.y_ * cl3;
+                double z = tr.p1Color.z_ * cl1 + tr.p2Color.z_ * cl2 + tr.p3Color.z_ * cl3;
+
+                Vector rP = texinterpolator.transform * inverseMVPTransform * inPoints[i];
+                double tl1 = (texinterpolator.p2y_p3y * (rP.x_ - texinterpolator.p3_.x_) + (texinterpolator.p3x_p2x) * (rP.y_ - texinterpolator.p3_.y_)) * texinterpolator.den;
+                double tl2 = ((texinterpolator.p3y_p1y) * (rP.x_ - texinterpolator.p3_.x_) + (texinterpolator.p1x_p3x) * (rP.y_ - texinterpolator.p3_.y_)) * texinterpolator.den;
+                double tl3 = 1 - tl1 - tl2;
+
+                double u = tr.p1TextureCordinates_.x_ * tl1 + tr.p2TextureCordinates_.x_ * tl2 + tr.p3TextureCordinates_.x_ * tl3;
+                double v = tr.p1TextureCordinates_.y_ * tl1 + tr.p2TextureCordinates_.y_ * tl2 + tr.p3TextureCordinates_.y_ * tl3;
+                
+                colors.Add(new Vector(x, y, z));
+                texs.Add(new Vector(u, v, 0));
+            }
+
+            for (int i = 2; i < inPoints.Count; i++)
+            {
+                Triangle tt = new Triangle(inPoints[0], inPoints[i - 1], inPoints[i]);
+                tt.p1Color = colors[0];
+                tt.p2Color = colors[i-1];
+                tt.p3Color = colors[i];
+                tt.p1TextureCordinates_ = texs[0];
+                tt.p2TextureCordinates_ = texs[i-1];
+                tt.p3TextureCordinates_ = texs[i];
+                triangles.Add(tt);
+                
+            }
+            return triangles;
+        }
+
+        public void DrawProjectedTriangle(BitmapData data, Triangle3D t, Matrix viewport, Matrix mvp, Camera camera)
+        {
+            Triangle2D t2 = ProjectTriangle(t, viewport*mvp);
 
             if (isBack(t2))//背面消隐
                 return;
 
-            //设置颜色插值参数
-            colorInterpolator.SetVector1(t2.p1_, pointsColors_[(int)t.p1_]);
-            colorInterpolator.SetVector2(t2.p2_, pointsColors_[(int)t.p2_]);
-            colorInterpolator.SetVector3(t2.p3_, pointsColors_[(int)t.p3_]);
-            colorInterpolator.PreCalculate();
+            Triangle tr = new Triangle(points_[(int)t.p1_], points_[(int)t.p2_],points_[(int)t.p3_]);
+            tr.p1Color = pointsColors_[(int)t.p1_];
+            tr.p2Color = pointsColors_[(int)t.p2_];
+            tr.p3Color = pointsColors_[(int)t.p3_];
+            tr.p1TextureCordinates_ = t.p1TextureCordinates_;
+            tr.p2TextureCordinates_ = t.p2TextureCordinates_;
+            tr.p3TextureCordinates_ = t.p3TextureCordinates_;
+            List<Triangle> triangles = clip(tr, mvp);
 
-            //设置文理坐标插值参数
-            texInterpolator.SetVector1(points_[(int)t.p1_], t.p1TextureCordinates_);
-            texInterpolator.SetVector2(points_[(int)t.p2_], t.p2TextureCordinates_);
-            texInterpolator.SetVector3(points_[(int)t.p3_], t.p3TextureCordinates_);
-            texInterpolator.PreCalculate();
+            //切分好的三角形
+            for (int i = 0; i < triangles.Count; i++)
+            {
+                Vector a = viewport * triangles[i].p1_;
+                Vector b = viewport * triangles[i].p2_;
+                Vector c = viewport * triangles[i].p3_;
+                a.x_ = Math.Floor(a.x_); a.y_ = Math.Floor(a.y_);
+                b.x_ = Math.Floor(b.x_); b.y_ = Math.Floor(b.y_);
+                c.x_ = Math.Floor(c.x_); c.y_ = Math.Floor(c.y_);
+                //设置颜色插值参数
+                colorInterpolator.SetVector1(a, triangles[i].p1Color);
+                colorInterpolator.SetVector2(b, triangles[i].p2Color);
+                colorInterpolator.SetVector3(c, triangles[i].p3Color);
+                colorInterpolator.PreCalculate();
 
-            if(showMode == 0)
-            {
-                DDA_DrawLine(data, double2Int(t2.p1_.x_), double2Int(t2.p1_.y_), double2Int(t2.p2_.x_), double2Int(t2.p2_.y_), pointsColors_[(int)t.p1_], pointsColors_[(int)t.p2_]);
-                DDA_DrawLine(data, double2Int(t2.p2_.x_), double2Int(t2.p2_.y_), double2Int(t2.p3_.x_), double2Int(t2.p3_.y_), pointsColors_[(int)t.p2_], pointsColors_[(int)t.p3_]);
-                DDA_DrawLine(data, double2Int(t2.p3_.x_), double2Int(t2.p3_.y_), double2Int(t2.p1_.x_), double2Int(t2.p1_.y_), pointsColors_[(int)t.p3_], pointsColors_[(int)t.p1_]);
-            }
-            else if(showMode == 1)
-            {
-                DrawTriangle(data, t2.p1_, t2.p2_, t2.p3_, false);
-            }
-            else if(showMode == 2)
-            {
-                DrawTriangle(data, t2.p1_, t2.p2_, t2.p3_, true);
+                //设置文理坐标插值参数
+                texInterpolator.SetVector1(inverseMVPVTransform * a, triangles[i].p1TextureCordinates_);
+                texInterpolator.SetVector2(inverseMVPVTransform * b, triangles[i].p2TextureCordinates_);
+                texInterpolator.SetVector3(inverseMVPVTransform * c, triangles[i].p3TextureCordinates_);
+                texInterpolator.PreCalculate();
+
+                if (showMode == 0)
+                {
+                    DDA_DrawLine(data, double2Int(a.x_), double2Int(a.y_), double2Int(b.x_), double2Int(b.y_), triangles[i].p1Color, triangles[i].p2Color);
+                    DDA_DrawLine(data, double2Int(b.x_), double2Int(b.y_), double2Int(c.x_), double2Int(c.y_), triangles[i].p2Color, triangles[i].p3Color);
+                    DDA_DrawLine(data, double2Int(c.x_), double2Int(c.y_), double2Int(a.x_), double2Int(a.y_), triangles[i].p3Color, triangles[i].p1Color);
+
+                    //DDA_DrawLine(data, double2Int(t2.p1_.x_), double2Int(t2.p1_.y_), double2Int(t2.p2_.x_), double2Int(t2.p2_.y_), pointsColors_[(int)t.p1_], pointsColors_[(int)t.p2_]);
+                    //DDA_DrawLine(data, double2Int(t2.p2_.x_), double2Int(t2.p2_.y_), double2Int(t2.p3_.x_), double2Int(t2.p3_.y_), pointsColors_[(int)t.p2_], pointsColors_[(int)t.p3_]);
+                    //DDA_DrawLine(data, double2Int(t2.p3_.x_), double2Int(t2.p3_.y_), double2Int(t2.p1_.x_), double2Int(t2.p1_.y_), pointsColors_[(int)t.p3_], pointsColors_[(int)t.p1_]);
+                }
+                else if (showMode == 1)
+                {
+                    DrawTriangle(data, a, b, c, false);
+                }
+                else if (showMode == 2)
+                {
+                    DrawTriangle(data, a, b, c, true);
+                }
             }
 
         }
@@ -239,9 +340,10 @@ namespace CGLearn.CG
             }
         }
         
-        public void DrawScene(Bitmap image, Matrix MV, Matrix P, Camera camera)
+        public void DrawScene(Bitmap image, Matrix MV, Matrix P, Matrix View, Camera camera)
         {
-            inverseTransform = (P * MV).Invert4x4Matrix();
+            inverseMVPVTransform = (View * P * MV).Invert4x4Matrix();
+            inverseMVPTransform = (P * MV).Invert4x4Matrix();
             if(isLight)
             {
                 //计算光照
@@ -280,7 +382,7 @@ namespace CGLearn.CG
             texData = texture.LockBits(new Rectangle(0, 0, texture.Width, texture.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb);
             for (int i = 0; i < triangles_.Count; i++)
             {
-                DrawProjectedTriangle(data, triangles_[i], P*MV, camera);
+                DrawProjectedTriangle(data, triangles_[i], View, P*MV, camera);
             }
             texture.UnlockBits(texData);
             image.UnlockBits(data);
@@ -293,8 +395,9 @@ namespace CGLearn.CG
             ClearBuffer();
             int m = Math.Min(width, height);
             Matrix MV = camera.GetViewMatrix() * worldTransform;
-            Matrix P = Matrix.CreatePerspectiveProjectionMatrix2(width / 2, height / 2, m , m, 1.1, 1, 1, 15);
-            DrawScene(graph, MV, P, camera);
+            Matrix P = Matrix.CreatePerspectiveProjectionMatrix(1.1, 1, 1, 15);
+            Matrix View = Matrix.CreateViewportMatrix(width / 2, height / 2, m, m);
+            DrawScene(graph, MV, P, View, camera);
         }
         static void Swap<T>(ref T a, ref T b)
         {
@@ -403,7 +506,7 @@ namespace CGLearn.CG
                                 projectP.x_ = x;
                                 projectP.y_ = y;
                                 projectP.z_ = z;
-                                StVector P = inverseTransform * projectP;
+                                StVector P = inverseMVPVTransform * projectP;
                                 P = texInterpolator.transform * P;
 
                                 double tl1 = (texInterpolator.p2y_p3y * (P.x_ - texInterpolator.p3_.x_) + (texInterpolator.p3x_p2x) * (P.y_ - texInterpolator.p3_.y_)) * texInterpolator.den;

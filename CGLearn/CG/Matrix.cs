@@ -290,8 +290,7 @@ namespace CGLearn.CG
                     0, 0, 0, 1);
         }
 
-        static public Matrix CreatePerspectiveProjectionMatrix2(int x, int y, int viewportWidth, int viewportHeight, double fovy,
-                double aspect, double znear, double zfar)
+        static public Matrix CreatePerspectiveProjectionMatrix(double fovy, double aspect, double znear, double zfar)
         {
             Matrix result = new Matrix(4, 4);
             double f = 1.0 / Math.Tan(fovy / 2),
@@ -312,9 +311,13 @@ namespace CGLearn.CG
             result.matrix_[13] = 0;
             result.matrix_[14] = -1;
             result.matrix_[15] = 0;
-            //return result;
 
-            return CreateTranslationMatrix(x, y, 0) * CreateScaleMatrix(viewportWidth / 2, viewportHeight / 2, 1)* result;
+            return result;
+        }
+
+        static public Matrix CreateViewportMatrix(int cX, int cY, int viewportWidth, int viewportHeight)
+        {
+            return CreateTranslationMatrix(cX, cY, 0) * CreateScaleMatrix(viewportWidth / 2, viewportHeight / 2, 1);
         }
 
         static public Matrix CreateViewMatrix(Vector cameraPosition, Vector observedPoint, Vector upDirection)

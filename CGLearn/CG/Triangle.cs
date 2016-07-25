@@ -47,4 +47,27 @@ namespace CGLearn.CG
             p3_ = p3;
         }
     }
+
+    //三角形全数据
+    class Triangle
+    {
+        public Vector p1_;
+        public Vector p2_;
+        public Vector p3_;
+
+        public Vector p1TextureCordinates_;
+        public Vector p2TextureCordinates_;
+        public Vector p3TextureCordinates_;
+
+        public Vector p1Color;
+        public Vector p2Color;
+        public Vector p3Color;
+
+        public Triangle(Vector p1, Vector p2, Vector p3)
+        {
+            p1_ = p1;
+            p2_ = p2;
+            p3_ = p3;
+        }
+    }
 }
