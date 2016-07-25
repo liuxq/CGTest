@@ -495,10 +495,6 @@ namespace CGLearn.CG
                             StVector cur;
                             cur.x_ = x; cur.y_ = y; cur.z_ = 1;
 
-                            double l1 = (colorInterpolator.p2y_p3y * (cur.x_ - colorInterpolator.p3_.x_) + (colorInterpolator.p3x_p2x) * (cur.y_ - colorInterpolator.p3_.y_)) * colorInterpolator.den;
-                            double l2 = ((colorInterpolator.p3y_p1y) * (cur.x_ - colorInterpolator.p3_.x_) + (colorInterpolator.p1x_p3x) * (cur.y_ - colorInterpolator.p3_.y_)) * colorInterpolator.den;
-                            double l3 = 1 - l1 - l2;
-
                             if (beTexture)
                             {
                                 //纹理渲染
@@ -520,23 +516,17 @@ namespace CGLearn.CG
                                 v = v < 0 ? 0 : v;
                                 v = v >= texHeight ? texHeight-1 : v;
 
-                                int R = (int)((colorInterpolator.p1Value_.x_ * l1 + colorInterpolator.p2Value_.x_ * l2 + colorInterpolator.p3Value_.x_ * l3) * 255) + texPtr[(u * 3) + v * texStride + 2];
-                                int G = (int)((colorInterpolator.p1Value_.y_ * l1 + colorInterpolator.p2Value_.y_ * l2 + colorInterpolator.p3Value_.y_ * l3) * 255) + texPtr[(u * 3) + v * texStride + 1];
-                                int B = (int)((colorInterpolator.p1Value_.z_ * l1 + colorInterpolator.p2Value_.z_ * l2 + colorInterpolator.p3Value_.z_ * l3) * 255) + texPtr[(u * 3) + v * texStride];
-
-                                R = R > 255 ? 255 : R;
-                                G = G > 255 ? 255 : G;
-                                B = B > 255 ? 255 : B;
-                                R = R < 0 ? 0 : R;
-                                G = G < 0 ? 0 : G;
-                                B = B < 0 ? 0 : B;
-                                ptr[(x * 3) + y * stride] = (byte)B;
-                                ptr[(x * 3) + y * stride + 1] = (byte)G;
-                                ptr[(x * 3) + y * stride + 2] = (byte)R;
+                                ptr[(x * 3) + y * stride] = texPtr[(u * 3) + v * texStride];
+                                ptr[(x * 3) + y * stride + 1] = texPtr[(u * 3) + v * texStride + 1];
+                                ptr[(x * 3) + y * stride + 2] = texPtr[(u * 3) + v * texStride + 2];
                             }
                             else
                             {
                                 //颜色渲染
+                                double l1 = (colorInterpolator.p2y_p3y * (cur.x_ - colorInterpolator.p3_.x_) + (colorInterpolator.p3x_p2x) * (cur.y_ - colorInterpolator.p3_.y_)) * colorInterpolator.den;
+                                double l2 = ((colorInterpolator.p3y_p1y) * (cur.x_ - colorInterpolator.p3_.x_) + (colorInterpolator.p1x_p3x) * (cur.y_ - colorInterpolator.p3_.y_)) * colorInterpolator.den;
+                                double l3 = 1 - l1 - l2;
+                                
                                 rgb.x_ = colorInterpolator.p1Value_.x_ * l1 + colorInterpolator.p2Value_.x_ * l2 + colorInterpolator.p3Value_.x_ * l3;
                                 rgb.y_ = colorInterpolator.p1Value_.y_ * l1 + colorInterpolator.p2Value_.y_ * l2 + colorInterpolator.p3Value_.y_ * l3;
                                 rgb.z_ = colorInterpolator.p1Value_.z_ * l1 + colorInterpolator.p2Value_.z_ * l2 + colorInterpolator.p3Value_.z_ * l3;
