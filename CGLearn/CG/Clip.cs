@@ -28,6 +28,18 @@ namespace CGLearn.CG
                 I.y_ = s.y_ + (1 - s.x_) * (p.y_ - s.y_) / (p.x_ - s.x_);
                 I.z_ = s.z_ + (1 - s.x_) * (p.z_ - s.z_) / (p.x_ - s.x_);
             }
+            else if(clipBoundary == 1)
+            {
+                I.x_ = -1;
+                I.y_ = s.y_ + (-1 - s.x_) * (p.y_ - s.y_) / (p.x_ - s.x_);
+                I.z_ = s.z_ + (-1 - s.x_) * (p.z_ - s.z_) / (p.x_ - s.x_);
+            }
+            else if (clipBoundary == 2)
+            {
+                I.x_ = -1;
+                I.y_ = s.y_ + (-1 - s.x_) * (p.y_ - s.y_) / (p.x_ - s.x_);
+                I.z_ = s.z_ + (-1 - s.x_) * (p.z_ - s.z_) / (p.x_ - s.x_);
+            }
 
             return I;
         }
