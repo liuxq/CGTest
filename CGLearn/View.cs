@@ -14,10 +14,10 @@ namespace CGLearn
     public partial class View : Form
     {
         private Color backColor = Color.Black;
-        private Bitmap theImage;
+        
         private Camera camera = null;
-        Scene3D scene = new Scene3D();
-        Graphics graph;
+        Scene3D scene;
+        
         Matrix worldTransform = Matrix.CreateIdentityMatrix(4);
 
         private bool isPress = false;
@@ -31,8 +31,7 @@ namespace CGLearn
             this.SetStyle(ControlStyles.AllPaintingInWmPaint, true);
             this.SetStyle(ControlStyles.UserPaint, true);
 
-            theImage = new Bitmap(this.ClientRectangle.Width, this.ClientRectangle.Height);
-            graph = Graphics.FromImage(theImage);
+            scene = new Scene3D(this.ClientRectangle.Width, this.ClientRectangle.Height);
             
             //顶点
             scene.AddPoint(1, -1, -1);
@@ -75,7 +74,8 @@ namespace CGLearn
             camera = new Camera(new Vector(0, 0, -5), new Vector(0,1,0), new Vector(0,0,0), 0, 100);
 
             scene.Init(this.ClientRectangle.Width, this.ClientRectangle.Height);
-            scene.Render(graph, theImage, this.ClientRectangle.Width, this.ClientRectangle.Height, camera, worldTransform);
+            scene.Render(this.ClientRectangle.Width, this.ClientRectangle.Height, camera, worldTransform);
+ 
             
         }
 
@@ -84,8 +84,8 @@ namespace CGLearn
             Graphics g = e.Graphics;
             g.Clear(backColor);
             //创建一个Bitmap  
-            
-            g.DrawImage(theImage, this.ClientRectangle);
+
+            g.DrawImage(scene.GetBmpMain(), this.ClientRectangle);
             
         }
 
@@ -95,16 +95,15 @@ namespace CGLearn
             {
                 int deltaX = e.X - preX;
                 int deltaY = e.Y - preY;
-                if(Math.Abs(deltaX) > 2 || Math.Abs(deltaY) > 2)
-                {
+                
                     worldTransform = Matrix.CreateYAxisRotationMatrix(deltaX / 400.0) * worldTransform;
                     worldTransform = Matrix.CreateXAxisRotationMatrix(deltaY / 400.0) * worldTransform;
 
-                    scene.Render(graph, theImage, this.ClientRectangle.Width, this.ClientRectangle.Height, camera, worldTransform);
+                    scene.Render(this.ClientRectangle.Width, this.ClientRectangle.Height, camera, worldTransform);
                     Invalidate(false);
                     preX = e.X;
                     preY = e.Y;
-                }
+                
                 
             }
         }
@@ -126,13 +125,13 @@ namespace CGLearn
             if(e.KeyCode == Keys.W)
             {
                 scene.SwitchShowMode();
-                scene.Render(graph, theImage, this.ClientRectangle.Width, this.ClientRectangle.Height, camera, worldTransform);
+                scene.Render(this.ClientRectangle.Width, this.ClientRectangle.Height, camera, worldTransform);
                 Invalidate(false);
             }
             else if (e.KeyCode == Keys.L)
             {
                 scene.SwitchLight();
-                scene.Render(graph, theImage, this.ClientRectangle.Width, this.ClientRectangle.Height, camera, worldTransform);
+                scene.Render(this.ClientRectangle.Width, this.ClientRectangle.Height, camera, worldTransform);
                 Invalidate(false);
             }
         }
@@ -143,14 +142,14 @@ namespace CGLearn
             {
                 if(camera.position.z_ < -2.2)
                     camera.position.z_ += .3;
-                scene.Render(graph, theImage, this.ClientRectangle.Width, this.ClientRectangle.Height, camera, worldTransform);
+                scene.Render(this.ClientRectangle.Width, this.ClientRectangle.Height, camera, worldTransform);
                 Invalidate(false);
             }
             else
             {
                 if (camera.position.z_ > -20)
                     camera.position.z_ -= .3;
-                scene.Render(graph, theImage, this.ClientRectangle.Width, this.ClientRectangle.Height, camera, worldTransform);
+                scene.Render(this.ClientRectangle.Width, this.ClientRectangle.Height, camera, worldTransform);
                 Invalidate(false);
             }
         }

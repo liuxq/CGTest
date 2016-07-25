@@ -68,34 +68,30 @@ namespace CGLearn.CG
         }
         static public Vector operator*(Matrix left, Vector v)
         {
-            pointMatrix.SetElement(0, 0, v.x_);
-            pointMatrix.SetElement(1, 0, v.y_);
-            pointMatrix.SetElement(2, 0, v.z_);
-            pointMatrix.SetElement(3, 0, 1);
+            Vector re = new Vector();
+            re.x_ = left.matrix_[0] * v.x_ + left.matrix_[1] * v.y_ + left.matrix_[2] * v.z_ + left.matrix_[3];
+            re.y_ = left.matrix_[4] * v.x_ + left.matrix_[5] * v.y_ + left.matrix_[6] * v.z_ + left.matrix_[7];
+            re.z_ = left.matrix_[8] * v.x_ + left.matrix_[9] * v.y_ + left.matrix_[10] * v.z_ + left.matrix_[11];
+            double w = 1 / (left.matrix_[12] * v.x_ + left.matrix_[13] * v.y_ + left.matrix_[14] * v.z_ + left.matrix_[15]);
 
-            Matrix.Multiply(left, pointMatrix, transformedPointMatrix);
-
-            double w = transformedPointMatrix.GetElement(3, 0);
-            return new Vector(transformedPointMatrix.GetElement(0, 0) / w,
-                transformedPointMatrix.GetElement(1, 0) / w,
-                transformedPointMatrix.GetElement(2, 0) / w);
+            re.x_ = re.x_ * w;
+            re.y_ = re.y_ * w;
+            re.z_ = re.z_ * w;
+            return re;
         }
 
         static public StVector operator *(Matrix left, StVector v)
         {
-            pointMatrix.SetElement(0, 0, v.x_);
-            pointMatrix.SetElement(1, 0, v.y_);
-            pointMatrix.SetElement(2, 0, v.z_);
-            pointMatrix.SetElement(3, 0, 1);
+            StVector re;
+            re.x_ = left.matrix_[0] * v.x_ + left.matrix_[1] * v.y_ + left.matrix_[2] * v.z_ + left.matrix_[3];
+            re.y_ = left.matrix_[4] * v.x_ + left.matrix_[5] * v.y_ + left.matrix_[6] * v.z_ + left.matrix_[7];
+            re.z_ = left.matrix_[8] * v.x_ + left.matrix_[9] * v.y_ + left.matrix_[10] * v.z_ + left.matrix_[11];
+            double w = 1/(left.matrix_[12] * v.x_ + left.matrix_[13] * v.y_ + left.matrix_[14] * v.z_ + left.matrix_[15]);
 
-            Matrix.Multiply(left, pointMatrix, transformedPointMatrix);
-
-            double w = transformedPointMatrix.GetElement(3, 0);
-
-            v.x_ = transformedPointMatrix.GetElement(0, 0) / w;
-            v.y_ = transformedPointMatrix.GetElement(1, 0) / w;
-            v.z_ = transformedPointMatrix.GetElement(2, 0) / w;
-            return v;
+            re.x_ = re.x_ * w;
+            re.y_ = re.y_ * w;
+            re.z_ = re.z_ * w;
+            return re;
         }
             
 

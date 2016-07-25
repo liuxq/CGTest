@@ -82,37 +82,7 @@ namespace CGLearn.CG
         {
             return x_ * right.x_ + y_ * right.y_ + z_ * right.z_;
         }
-
-        public Vector Transform(Matrix transformationMatrix)
-        {
-            pointMatrix.SetElement(0, 0, x_);
-            pointMatrix.SetElement(1, 0, y_);
-            pointMatrix.SetElement(2, 0, z_);
-            pointMatrix.SetElement(3, 0, 1);
-
-            Matrix.Multiply(transformationMatrix, pointMatrix, transformedPointMatrix);
-
-            double w = transformedPointMatrix.GetElement(3, 0);
-            return new Vector(transformedPointMatrix.GetElement(0, 0) / w,
-                transformedPointMatrix.GetElement(1, 0) / w,
-                transformedPointMatrix.GetElement(2, 0) / w);
-        }
-
-        //static public bool operator == (Vector left, Vector right)
-        //{
-        //    return Math.Abs(left.x_ - right.x_) <= 0.0001 &&
-        //        Math.Abs(left.y_ - right.y_) <= 0.0001 &&
-        //        Math.Abs(left.z_ - right.z_) <= 0.0001;
-        //}
-
-        //static public bool operator !=(Vector left, Vector right)
-        //{
-        //    return !(Math.Abs(left.x_ - right.x_) <= 0.0001 &&
-        //        Math.Abs(left.y_ - right.y_) <= 0.0001 &&
-        //        Math.Abs(left.z_ - right.z_) <= 0.0001);
-        //}
-
-        
+   
 
     }
     

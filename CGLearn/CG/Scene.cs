@@ -33,8 +33,17 @@ namespace CGLearn.CG
         int showMode = 0;//0:line, 1:color, 2:texture
         bool isLight = false;
 
-        Bitmap texture = new Bitmap("env2.bmp");
-        BitmapData texData;
+        Bitmap bmpMain;
+        BitmapData dataMain;
+
+        Bitmap bmpTexture;
+        BitmapData dataTex;
+
+        Bitmap bmpDepth;
+        BitmapData dataDepth;
+
+        Graphics graphMain;
+        Graphics graDepth;
         
         Triangle2DInterpolator colorInterpolator = new Triangle2DInterpolator();
 
@@ -48,6 +57,13 @@ namespace CGLearn.CG
         Matrix inverseMVPVTransform;
         Matrix inverseMVPTransform;
 
+        Stopwatch watch = new Stopwatch();
+
+        public Bitmap GetBmpMain()
+        {
+            return bmpMain;
+        }
+        
         public void SwitchShowMode()
         {
             showMode = (showMode + 1) % 3;
@@ -57,15 +73,29 @@ namespace CGLearn.CG
             isLight = !isLight;
         }
 
-        public Scene3D()
+        public Scene3D(int width, int height)
         {
+            width_ = width;
+            height_ = height;
             worldTransformation_ = new Matrix(4,4);
             worldTransformation_ = Matrix.CreateIdentityMatrix(4);
             clipManager.Init();
+            bmpMain = new Bitmap(width_, height_);
+            bmpDepth = new Bitmap(width_, height_);
+            bmpTexture = new Bitmap("env2.bmp");
+            graphMain = Graphics.FromImage(bmpMain);
+            graDepth = Graphics.FromImage(bmpDepth);
+
+            dataTex = bmpTexture.LockBits(new Rectangle(0, 0, bmpTexture.Width, bmpTexture.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb);
+
+            
         }
 
         ~Scene3D()
         {
+            
+            bmpTexture.UnlockBits(dataTex);
+            
         }
 
         public void Init(int width, int height)
@@ -77,8 +107,10 @@ namespace CGLearn.CG
 
         public void ClearBuffer()
         {
-            for (int i = 0; i < height_; i++)
-                for (int j = 0; j < width_; j++)
+            
+            int i, j;
+            for (i = 0; i < height_ * width_; i++)
+                for (j = 0; j < width_; j++)
                     zBuffer_[j, i] = double.MaxValue;
         }
 
@@ -121,20 +153,11 @@ namespace CGLearn.CG
             return triangles_[i];
         }
 
-        Vector ProjectPoint(Vector p, Matrix projectionMatrix)
-        {
-            Vector projected = p.Transform(projectionMatrix);
-            projected.y_ = Math.Floor(projected.y_);
-            projected.x_ = Math.Floor(projected.x_);
-           
-            return projected;
-        }
-
         Triangle2D ProjectTriangle(Triangle3D triangle, Matrix transformationMatrix)
         {
-             return new Triangle2D(ProjectPoint(points_[(int)triangle.p1_], transformationMatrix),
-                 ProjectPoint(points_[(int)triangle.p2_], transformationMatrix),
-                 ProjectPoint(points_[(int)triangle.p3_], transformationMatrix));
+            return new Triangle2D(transformationMatrix * points_[(int)triangle.p1_],
+                transformationMatrix * points_[(int)triangle.p2_],
+                transformationMatrix * points_[(int)triangle.p3_]);
         }
 
         private int float2Int(float f)
@@ -229,7 +252,7 @@ namespace CGLearn.CG
             return triangles;
         }
 
-        public void DrawProjectedTriangle(BitmapData data, Triangle3D t, Matrix viewport, Matrix mvp, Camera camera)
+        public void DrawProjectedTriangle(Triangle3D t, Matrix viewport, Matrix mvp, Camera camera)
         {
             Triangle2D t2 = ProjectTriangle(t, viewport*mvp);
 
@@ -268,9 +291,9 @@ namespace CGLearn.CG
 
                 if (showMode == 0)
                 {
-                    DDA_DrawLine(data, double2Int(a.x_), double2Int(a.y_), double2Int(b.x_), double2Int(b.y_), triangles[i].p1Color, triangles[i].p2Color);
-                    DDA_DrawLine(data, double2Int(b.x_), double2Int(b.y_), double2Int(c.x_), double2Int(c.y_), triangles[i].p2Color, triangles[i].p3Color);
-                    DDA_DrawLine(data, double2Int(c.x_), double2Int(c.y_), double2Int(a.x_), double2Int(a.y_), triangles[i].p3Color, triangles[i].p1Color);
+                    DDA_DrawLine(dataMain, double2Int(a.x_), double2Int(a.y_), double2Int(b.x_), double2Int(b.y_), triangles[i].p1Color, triangles[i].p2Color);
+                    DDA_DrawLine(dataMain, double2Int(b.x_), double2Int(b.y_), double2Int(c.x_), double2Int(c.y_), triangles[i].p2Color, triangles[i].p3Color);
+                    DDA_DrawLine(dataMain, double2Int(c.x_), double2Int(c.y_), double2Int(a.x_), double2Int(a.y_), triangles[i].p3Color, triangles[i].p1Color);
 
                     //DDA_DrawLine(data, double2Int(t2.p1_.x_), double2Int(t2.p1_.y_), double2Int(t2.p2_.x_), double2Int(t2.p2_.y_), pointsColors_[(int)t.p1_], pointsColors_[(int)t.p2_]);
                     //DDA_DrawLine(data, double2Int(t2.p2_.x_), double2Int(t2.p2_.y_), double2Int(t2.p3_.x_), double2Int(t2.p3_.y_), pointsColors_[(int)t.p2_], pointsColors_[(int)t.p3_]);
@@ -278,11 +301,11 @@ namespace CGLearn.CG
                 }
                 else if (showMode == 1)
                 {
-                    DrawTriangle(data, a, b, c, false);
+                    DrawTriangle(dataMain, a, b, c, false);
                 }
                 else if (showMode == 2)
                 {
-                    DrawTriangle(data, a, b, c, true);
+                    DrawTriangle(dataMain, a, b, c, true);
                 }
             }
 
@@ -342,6 +365,7 @@ namespace CGLearn.CG
         
         public void DrawScene(Bitmap image, Matrix MV, Matrix P, Matrix View, Camera camera)
         {
+            
             inverseMVPVTransform = (View * P * MV).Invert4x4Matrix();
             inverseMVPTransform = (P * MV).Invert4x4Matrix();
             if(isLight)
@@ -376,28 +400,39 @@ namespace CGLearn.CG
                 pointsColors_[6].x_ = 1; pointsColors_[6].y_ = 1; pointsColors_[6].z_ = 1;
                 pointsColors_[7].x_ = 1; pointsColors_[7].y_ = 1; pointsColors_[7].z_ = 0;
             }
-            
 
-            BitmapData data = image.LockBits(new Rectangle(0, 0, image.Width, image.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
-            texData = texture.LockBits(new Rectangle(0, 0, texture.Width, texture.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb);
             for (int i = 0; i < triangles_.Count; i++)
             {
-                DrawProjectedTriangle(data, triangles_[i], View, P*MV, camera);
+                DrawProjectedTriangle(triangles_[i], View, P*MV, camera);
             }
-            texture.UnlockBits(texData);
-            image.UnlockBits(data);
+            
+
+           
         }
 
-        public void Render(Graphics graphics, Bitmap graph, int width, int height, Camera camera, Matrix worldTransform)
+        public void Render(int width, int height, Camera camera, Matrix worldTransform)
         {
-            graphics.Clear(Color.Black);
-            graphics.DrawString("W 切换显示模式（线框、填充、纹理）\nL 开关光照\n鼠标控制旋转和缩放", drawFont, drawBrush, 0,0);
-            ClearBuffer();
+            
+
+            graphMain.Clear(Color.Black);
+            graDepth.Clear(Color.White);
+            graphMain.DrawString("W 切换显示模式（线框、填充、纹理）\nL 开关光照\n鼠标控制旋转和缩放", drawFont, drawBrush, 0, 0);
+            
             int m = Math.Min(width, height);
             Matrix MV = camera.GetViewMatrix() * worldTransform;
             Matrix P = Matrix.CreatePerspectiveProjectionMatrix(1.1, 1, 1, 15);
             Matrix View = Matrix.CreateViewportMatrix(width / 2, height / 2, m, m);
-            DrawScene(graph, MV, P, View, camera);
+            
+            dataMain = bmpMain.LockBits(new Rectangle(0, 0, bmpMain.Width, bmpMain.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+            dataDepth = bmpDepth.LockBits(new Rectangle(0, 0, bmpDepth.Width, bmpDepth.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+            
+            DrawScene(bmpMain, MV, P, View, camera);
+            watch.Reset();
+            watch.Start();
+            bmpMain.UnlockBits(dataMain);
+            bmpDepth.UnlockBits(dataDepth);
+            watch.Stop();
+           
         }
         static void Swap<T>(ref T a, ref T b)
         {
@@ -436,8 +471,11 @@ namespace CGLearn.CG
             double xr = betay * top.x_ + (1 - betay) * bottom.x_;
             double zr = betay * top.z_ + (1 - betay) * bottom.z_;
 
+            
             DrawTriangleWithXParellGround(data, top, new Vector(xr, y, zr), middle, beTexture);
             DrawTriangleWithXParellGround(data, bottom, new Vector(xr, y, zr), middle, beTexture);
+            //watch.Stop();
+
         }
 
         void DrawTriangleWithXParellGround(BitmapData data, Vector p1, Vector p2, Vector p3, bool beTexture)
@@ -460,8 +498,8 @@ namespace CGLearn.CG
             float xLeft = (float)p2.x_;
             float xRight = (float)p3.x_;
 
-            int texWidth = texture.Width;
-            int texHeight = texture.Height;
+            int texWidth = bmpTexture.Width;
+            int texHeight = bmpTexture.Height;
 
             int direction = ystart < yend ? 1 : -1;
             if(direction == -1)
@@ -471,11 +509,14 @@ namespace CGLearn.CG
             }
             StVector rgb;
             int stride = data.Stride;
-            int texStride = texData.Stride;
+            int texStride = dataTex.Stride;
+            int depthStride = dataDepth.Stride;
+            Matrix texInterpolatorTransform = texInterpolator.transform * inverseMVPVTransform;
             unsafe
             {
                 byte* ptr = (byte*)data.Scan0;
-                byte* texPtr = (byte*)texData.Scan0;
+                byte* texPtr = (byte*)dataTex.Scan0;
+                byte* depthPtr = (byte*)dataDepth.Scan0;
                 for (int y = yend; y != ystart - direction; y -= direction)
                 {
                     int xLeft_int = (int)xLeft;
@@ -489,9 +530,9 @@ namespace CGLearn.CG
                         double betax = (xLeft_int == xRight_int) ? 1 : ((double)x - xRight_int) / (xLeft_int - xRight_int);
                         double z = betax * zl + (1 - betax) * zr;
 
-                        if (x >= 0 && y >= 0 && x < width_ && y < height_ && z < zBuffer_[x, y] && z <= 1 && z >= -1)
+                        if (x >= 0 && y >= 0 && x < width_ && y < height_ && z * 255 < depthPtr[(x * 3) + y * depthStride])
                         {
-                            zBuffer_[x,y] = z;
+                            depthPtr[(x * 3) + y * depthStride] = (byte)(z*255);
                             StVector cur;
                             cur.x_ = x; cur.y_ = y; cur.z_ = 1;
 
@@ -502,8 +543,7 @@ namespace CGLearn.CG
                                 projectP.x_ = x;
                                 projectP.y_ = y;
                                 projectP.z_ = z;
-                                StVector P = inverseMVPVTransform * projectP;
-                                P = texInterpolator.transform * P;
+                                StVector P = texInterpolatorTransform * projectP;
 
                                 double tl1 = (texInterpolator.p2y_p3y * (P.x_ - texInterpolator.p3_.x_) + (texInterpolator.p3x_p2x) * (P.y_ - texInterpolator.p3_.y_)) * texInterpolator.den;
                                 double tl2 = ((texInterpolator.p3y_p1y) * (P.x_ - texInterpolator.p3_.x_) + (texInterpolator.p1x_p3x) * (P.y_ - texInterpolator.p3_.y_)) * texInterpolator.den;
@@ -526,7 +566,7 @@ namespace CGLearn.CG
                                 double l1 = (colorInterpolator.p2y_p3y * (cur.x_ - colorInterpolator.p3_.x_) + (colorInterpolator.p3x_p2x) * (cur.y_ - colorInterpolator.p3_.y_)) * colorInterpolator.den;
                                 double l2 = ((colorInterpolator.p3y_p1y) * (cur.x_ - colorInterpolator.p3_.x_) + (colorInterpolator.p1x_p3x) * (cur.y_ - colorInterpolator.p3_.y_)) * colorInterpolator.den;
                                 double l3 = 1 - l1 - l2;
-                                
+
                                 rgb.x_ = colorInterpolator.p1Value_.x_ * l1 + colorInterpolator.p2Value_.x_ * l2 + colorInterpolator.p3Value_.x_ * l3;
                                 rgb.y_ = colorInterpolator.p1Value_.y_ * l1 + colorInterpolator.p2Value_.y_ * l2 + colorInterpolator.p3Value_.y_ * l3;
                                 rgb.z_ = colorInterpolator.p1Value_.z_ * l1 + colorInterpolator.p2Value_.z_ * l2 + colorInterpolator.p3Value_.z_ * l3;
@@ -541,6 +581,10 @@ namespace CGLearn.CG
                                 ptr[(x * 3) + y * stride] = (byte)(rgb.z_ * 255);
                                 ptr[(x * 3) + y * stride + 1] = (byte)(rgb.y_ * 255);
                                 ptr[(x * 3) + y * stride + 2] = (byte)(rgb.x_ * 255);
+
+                                //ptr[(x * 3) + y * stride] = (byte)(255);
+                                //ptr[(x * 3) + y * stride + 1] = (byte)(255);
+                                //ptr[(x * 3) + y * stride + 2] = (byte)(255);
 
                             }
                             

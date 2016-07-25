@@ -24,13 +24,6 @@ namespace CGLearn.CG
             this.zmax = zmax;
         }
 
-        public void Transform(Matrix transformationMatrix)
-        {
-            position = position.Transform(transformationMatrix);
-            upDirection = upDirection.Transform(transformationMatrix);
-            target = target.Transform(transformationMatrix);
-        }
-
         public Matrix GetViewMatrix()
         {
             return Matrix.CreateViewMatrix(position, target, upDirection);
