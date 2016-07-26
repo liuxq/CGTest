@@ -48,11 +48,11 @@
   <ItemGroup>
     <Compile Include="CG\Camera.cs" />
     <Compile Include="CG\Clip.cs" />
-    <Compile Include="CG\Matrix.cs" />
+    <Compile Include="CG\Matrix4.cs" />
     <Compile Include="CG\Scene.cs" />
     <Compile Include="CG\Triangle.cs" />
     <Compile Include="CG\Triangle3DInterpolator.cs" />
-    <Compile Include="CG\Vector.cs" />
+    <Compile Include="CG\Vector3.cs" />
     <Compile Include="View.cs">
       <SubType>Form</SubType>
     </Compile>

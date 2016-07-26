@@ -9,19 +9,19 @@ namespace CGLearn.CG
 {
     class Clip
     {
-        List<Vector> points = new List<Vector>();
+        List<Vector3> m_listPoints = new List<Vector3>();
         public void Init()
         {
-            points.Add(new Vector(1, 0, 0));//x = 1
-            points.Add(new Vector(-1, 0, 0));//x = -1
-            points.Add(new Vector(0, 1, 0));//y = 1
-            points.Add(new Vector(0, -1, 0));//y = -1
-            points.Add(new Vector(0, 0, 1));//z = 1
-            points.Add(new Vector(0, 0, -1));//z = -1
+            m_listPoints.Add(new Vector3(1, 0, 0));//x = 1
+            m_listPoints.Add(new Vector3(-1, 0, 0));//x = -1
+            m_listPoints.Add(new Vector3(0, 1, 0));//y = 1
+            m_listPoints.Add(new Vector3(0, -1, 0));//y = -1
+            m_listPoints.Add(new Vector3(0, 0, 1));//z = 1
+            m_listPoints.Add(new Vector3(0, 0, -1));//z = -1
         }
-        Vector Intersect(Vector s, Vector p, int clipBoundary)
+        Vector3 Intersect(Vector3 s, Vector3 p, int clipBoundary)
         {
-            Vector I = new Vector();
+            Vector3 I = new Vector3();
             if(clipBoundary == 0)
             {
                 I.x_ = 1;
@@ -61,16 +61,16 @@ namespace CGLearn.CG
 
             return I;
         }
-        bool Inside(Vector testVertex, int clipBoundary)
+        bool Inside(Vector3 testVertex, int clipBoundary)
         {
-            return (testVertex - points[clipBoundary]).Dot(points[clipBoundary]) <= 0;
+            return (testVertex - m_listPoints[clipBoundary]).Dot(m_listPoints[clipBoundary]) <= 0;
         }
-        public void SutherlandHodgmanPolygonClip(List<Vector> inPoints, List<Vector> outPoints, int clipBoundary)
+        public void SutherlandHodgmanPolygonClip(List<Vector3> inPoints, List<Vector3> outPoints, int clipBoundary)
         {
             if (inPoints.Count == 0)
                 return;
-            Vector s = inPoints[inPoints.Count - 1];
-            Vector p;
+            Vector3 s = inPoints[inPoints.Count - 1];
+            Vector3 p;
             for(int i = 0; i < inPoints.Count; i++)
             {
                 p = inPoints[i];

@@ -14,9 +14,9 @@ namespace CGLearn.CG
 
         //Vector normal_;
 
-        public Vector p1TextureCordinates_;
-        public Vector p2TextureCordinates_;
-        public Vector p3TextureCordinates_;
+        public Vector3 p1TextureCordinates_;
+        public Vector3 p2TextureCordinates_;
+        public Vector3 p3TextureCordinates_;
 
         public Triangle3D(uint p1, uint p2,uint p3)
         {
@@ -25,7 +25,7 @@ namespace CGLearn.CG
             p3_ = p3;
         }
 
-        public void SetTextureCoordinates(Vector t1, Vector t2, Vector t3)
+        public void SetTextureCoordinates(Vector3 t1, Vector3 t2, Vector3 t3)
         {
             p1TextureCordinates_ = t1;
             p2TextureCordinates_ = t2;
@@ -36,11 +36,11 @@ namespace CGLearn.CG
 
     class Triangle2D
     {
-        public Vector p1_;
-        public Vector p2_;
-        public Vector p3_;
+        public Vector3 p1_;
+        public Vector3 p2_;
+        public Vector3 p3_;
 
-        public Triangle2D(Vector p1, Vector p2, Vector p3)  
+        public Triangle2D(Vector3 p1, Vector3 p2, Vector3 p3)  
         {
             p1_ = p1;
             p2_ = p2;
@@ -51,19 +51,19 @@ namespace CGLearn.CG
     //三角形全数据
     class Triangle
     {
-        public Vector p1_;
-        public Vector p2_;
-        public Vector p3_;
+        public Vector3 p1_;
+        public Vector3 p2_;
+        public Vector3 p3_;
 
-        public Vector p1TextureCordinates_;
-        public Vector p2TextureCordinates_;
-        public Vector p3TextureCordinates_;
+        public Vector3 p1TextureCordinates_;
+        public Vector3 p2TextureCordinates_;
+        public Vector3 p3TextureCordinates_;
 
-        public Vector p1Color;
-        public Vector p2Color;
-        public Vector p3Color;
+        public Vector3 p1Color;
+        public Vector3 p2Color;
+        public Vector3 p3Color;
 
-        public Triangle(Vector p1, Vector p2, Vector p3)
+        public Triangle(Vector3 p1, Vector3 p2, Vector3 p3)
         {
             p1_ = p1;
             p2_ = p2;

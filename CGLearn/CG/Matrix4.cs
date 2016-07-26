@@ -6,69 +6,77 @@ using System.Threading.Tasks;
 
 namespace CGLearn.CG
 {
-    class Matrix
+    class Matrix4
     {
-        private double[] matrix_;
-        private int width_;
-        private int height_;
-
-        static private Matrix pointMatrix = new Matrix(1, 4);
-        static private Matrix transformedPointMatrix = new Matrix(1, 4);
+        public double[] matrix_;
 
         bool DoubleEquals(double d1, double d2)
         {
             return Math.Abs(d1 - d2) < 0.0001;
         }
 
-        public Matrix(int width, int height)
+        public Matrix4()
         {
-            height_ = height;
-            width_ = width;
-            matrix_ = new double[width * height];
-            for (uint i = 0; i < width_ * height_; i++)
-                matrix_[i] = 0;
+            matrix_ = new double[16];
+            Array.Clear(matrix_, 0, 16);
         }
 
-        public Matrix(Matrix other) :this(other.width_, other.height_)
+        public Matrix4(Matrix4 other) :this()
         {
-            for (int i = 0; i < height_; i++)
-                for (int j = 0; j < width_; j++)
-                    SetElement(i, j, other.GetElement(i, j));
+            Array.Copy(other.matrix_, matrix_, 16);
         }
 
-        ~Matrix()
+        ~Matrix4()
         {
             
         }
 
         public double GetElement(int row, int col)
         {
-            return matrix_[row * width_ + col];
+            return matrix_[row * 4 + col];
         }
 
         public void SetElement(int row, int col, double val)
         {
-            matrix_[row * width_ + col] = val;
+            matrix_[row * 4 + col] = val;
         }
-        static public void Multiply(Matrix left, Matrix right, Matrix result)
-        {
-            int height = left.height_;
-            int width = right.width_;
-            Array.Clear(result.matrix_, 0x0, width * height);
 
-            for( int i = 0; i < left.height_; i++ ) {
-                for( int j = 0; j < right.width_; j++ )
-                {
-                    for(int k = 0; k < left.width_; k++)
-                    {
-                        result.matrix_[i*right.width_+j] += left.matrix_[i*left.width_+k]*right.matrix_[k * right.width_+j];
-                    }
-                }
-            }
-        }
-        static public Vector operator*(Matrix left, Vector v)
+        static public void Multiply(Matrix4 left, Matrix4 right, Matrix4 result)
         {
-            Vector re = new Vector();
+            double a00 = right.matrix_[0], a01 = right.matrix_[1], a02 = right.matrix_[2], a03 = right.matrix_[3],
+                a10 = right.matrix_[4], a11 = right.matrix_[5], a12 = right.matrix_[6], a13 = right.matrix_[7],
+                a20 = right.matrix_[8], a21 = right.matrix_[9], a22 = right.matrix_[10], a23 = right.matrix_[11],
+                a30 = right.matrix_[12], a31 = right.matrix_[13], a32 = right.matrix_[14], a33 = right.matrix_[15];
+
+            // Cache only the current line of the second matrix
+            double b0  = left.matrix_[0], b1 = left.matrix_[1], b2 = left.matrix_[2], b3 = left.matrix_[3];
+            result.matrix_[0] = b0*a00 + b1*a10 + b2*a20 + b3*a30;
+            result.matrix_[1] = b0*a01 + b1*a11 + b2*a21 + b3*a31;
+            result.matrix_[2] = b0*a02 + b1*a12 + b2*a22 + b3*a32;
+            result.matrix_[3] = b0*a03 + b1*a13 + b2*a23 + b3*a33;
+
+            b0 = left.matrix_[4]; b1 = left.matrix_[5]; b2 = left.matrix_[6]; b3 = left.matrix_[7];
+            result.matrix_[4] = b0*a00 + b1*a10 + b2*a20 + b3*a30;
+            result.matrix_[5] = b0*a01 + b1*a11 + b2*a21 + b3*a31;
+            result.matrix_[6] = b0*a02 + b1*a12 + b2*a22 + b3*a32;
+            result.matrix_[7] = b0*a03 + b1*a13 + b2*a23 + b3*a33;
+
+            b0 = left.matrix_[8]; b1 = left.matrix_[9]; b2 = left.matrix_[10]; b3 = left.matrix_[11];
+            result.matrix_[8] = b0*a00 + b1*a10 + b2*a20 + b3*a30;
+            result.matrix_[9] = b0*a01 + b1*a11 + b2*a21 + b3*a31;
+            result.matrix_[10] = b0*a02 + b1*a12 + b2*a22 + b3*a32;
+            result.matrix_[11] = b0*a03 + b1*a13 + b2*a23 + b3*a33;
+
+            b0 = left.matrix_[12]; b1 = left.matrix_[13]; b2 = left.matrix_[14]; b3 = left.matrix_[15];
+            result.matrix_[12] = b0*a00 + b1*a10 + b2*a20 + b3*a30;
+            result.matrix_[13] = b0*a01 + b1*a11 + b2*a21 + b3*a31;
+            result.matrix_[14] = b0*a02 + b1*a12 + b2*a22 + b3*a32;
+            result.matrix_[15] = b0*a03 + b1*a13 + b2*a23 + b3*a33;
+        }
+
+        static public Vector3 operator*(Matrix4 left, Vector3 v)
+        {
+            Vector3 re = new Vector3();
             re.x_ = left.matrix_[0] * v.x_ + left.matrix_[1] * v.y_ + left.matrix_[2] * v.z_ + left.matrix_[3];
             re.y_ = left.matrix_[4] * v.x_ + left.matrix_[5] * v.y_ + left.matrix_[6] * v.z_ + left.matrix_[7];
             re.z_ = left.matrix_[8] * v.x_ + left.matrix_[9] * v.y_ + left.matrix_[10] * v.z_ + left.matrix_[11];
@@ -80,7 +88,7 @@ namespace CGLearn.CG
             return re;
         }
 
-        static public StVector operator *(Matrix left, StVector v)
+        static public StVector operator *(Matrix4 left, StVector v)
         {
             StVector re;
             re.x_ = left.matrix_[0] * v.x_ + left.matrix_[1] * v.y_ + left.matrix_[2] * v.z_ + left.matrix_[3];
@@ -94,57 +102,51 @@ namespace CGLearn.CG
             return re;
         }
             
-
-        static public Matrix operator*(Matrix l, double number)
+        static public Matrix4 operator*(Matrix4 left, double number)
         {
-            Matrix result = new Matrix(l.width_, l.height_);
+            Matrix4 result = new Matrix4();
 
-            for (int row = 0; row < l.height_; row++)
-                for (int col = 0; col < l.width_; col++)
-                    result.SetElement(row, col, l.GetElement(row, col) * number);
+            for (int i = 0; i < 16; i++)
+                result.matrix_[i] = left.matrix_[i] *= number;
 
             return result;
         }
 
-        static public Matrix operator *(Matrix l, Matrix right)
+        static public Matrix4 operator *(Matrix4 left, Matrix4 right)
         {
-            Matrix result = new Matrix(l.height_, right.width_);
+            Matrix4 result = new Matrix4();
 
-            Multiply(l, right, result);
+            Multiply(left, right, result);
 
             return result;
         }
 
-        static public Matrix operator -(Matrix l, Matrix right)
+        static public Matrix4 operator -(Matrix4 left, Matrix4 right)
         {
-            Matrix result = new Matrix(l.width_, l.height_);
-
-            for (int row = 0; row < l.height_; row++)
-                for (int col = 0; col < l.width_; col++)
-                    result.SetElement(row, col, l.GetElement(row, col) - right.GetElement(row, col));
+            Matrix4 result = new Matrix4();
+            for (int i = 0; i < 16; i++)
+                result.matrix_[i] = left.matrix_[i] - right.matrix_[i];
 
             return result;
         }
 
-        static public Matrix CreateIdentityMatrix(int size)
+        static public Matrix4 CreateIdentityMatrix()
         {
-            Matrix result = new Matrix(size, size);
+            Matrix4 result = new Matrix4();
 
-            for (int i = 0; i < size; i++)
+            for (int i = 0; i < 4; i++)
             {
                 result.SetElement(i, i, 1);
             }
-
             return result;
         }
 
-
-        static public Matrix Create4x4Matrix(double m11, double m12, double m13, double m14,
+        static public Matrix4 Create4x4Matrix(double m11, double m12, double m13, double m14,
                 double m21, double m22, double m23, double m24,
                 double m31, double m32, double m33, double m34,
                 double m41, double m42, double m43, double m44)
         {
-            Matrix m = new Matrix(4, 4);
+            Matrix4 m = new Matrix4();
             m.matrix_[0] =  m11;
             m.matrix_[1] =  m12;
             m.matrix_[2] =  m13;
@@ -168,52 +170,7 @@ namespace CGLearn.CG
             return m;
         }
 
-        static public Matrix Create3x3Matrix(double m11, double m12, double m13, double m21, double m22, double m23, double m31, double m32, double m33)
-        {
-            Matrix m = new Matrix(3, 3);
-
-            m.matrix_[0] = m11;
-            m.matrix_[1] = m12;
-            m.matrix_[2] =  m13;
-
-            m.matrix_[3] =  m21;
-            m.matrix_[4] =  m22;
-            m.matrix_[5] =  m23;
-
-            m.matrix_[6] =  m31;
-            m.matrix_[7] =  m32;
-            m.matrix_[8] =  m33;
-
-            return m;
-        }
-
-        static public void Set3x3Matrix(Matrix m, double m11, double m12, double m13, double m21, double m22, double m23, double m31, double m32, double m33)
-        {
-            m.matrix_[0] = m11;
-            m.matrix_[1] = m12;
-            m.matrix_[2] =  m13;
-
-            m.matrix_[3] =  m21;
-            m.matrix_[4] =  m22;
-            m.matrix_[5] =  m23;
-
-            m.matrix_[6] =  m31;
-            m.matrix_[7] =  m32;
-            m.matrix_[8] =  m33;
-        }
-
-        static public Matrix Create3x1Matrix(double m11, double m21, double m31)
-        {
-            Matrix m = new Matrix(1, 3);
-
-            m.matrix_[0] =  m11;
-            m.matrix_[1] =  m21;
-            m.matrix_[2] =  m31;
-
-            return m;
-        }
-
-        static public Matrix CreateScaleMatrix(double xFactor, double yFactor, double zFactor)
+        static public Matrix4 CreateScaleMatrix(double xFactor, double yFactor, double zFactor)
         {
             return Create4x4Matrix(xFactor, 0, 0, 0,
                                       0, yFactor, 0, 0,
@@ -221,7 +178,7 @@ namespace CGLearn.CG
                                       0, 0, 0, 1);
         }
 
-        static public Matrix CreateTranslationMatrix(double xMove, double yMove, double zMove)
+        static public Matrix4 CreateTranslationMatrix(double xMove, double yMove, double zMove)
         {
             return Create4x4Matrix(1, 0, 0, xMove,
                                   0, 1, 0, yMove,
@@ -229,12 +186,12 @@ namespace CGLearn.CG
                                   0, 0, 0, 1);
         }
 
-        static public Matrix CreateTranslationMatrix(Vector v)
+        static public Matrix4 CreateTranslationMatrix(Vector3 v)
         {
             return CreateTranslationMatrix(v.x_, v.y_, v.z_);
         }
 
-        static public Matrix CreateXAxisRotationMatrix(double radians)
+        static public Matrix4 CreateXAxisRotationMatrix(double radians)
         {
             return Create4x4Matrix(1, 0, 0, 0,
                   0, Math.Cos(radians), -Math.Sin(radians), 0,
@@ -242,12 +199,7 @@ namespace CGLearn.CG
                   0, 0, 0, 1);
         }
 
-        static public Matrix CreateXAxisRotationMatrixAroundPoint(double angleInRadians, Vector p)
-        {
-            return CreateTranslationMatrix(p) * CreateXAxisRotationMatrix(angleInRadians) * CreateTranslationMatrix(-p);
-        }
-
-        static public Matrix CreateYAxisRotationMatrix(double radians)
+        static public Matrix4 CreateYAxisRotationMatrix(double radians)
         {
             return Create4x4Matrix(Math.Cos(radians), 0, Math.Sin(radians), 0,
                                                           0, 1, 0, 0,
@@ -255,12 +207,7 @@ namespace CGLearn.CG
                                                           0, 0, 0, 1);
         }
 
-        static public Matrix CreateYAxisRotationMatrixAroundPoint(double angleInRadians, Vector p)
-        {
-            return CreateTranslationMatrix(p) * CreateYAxisRotationMatrix(angleInRadians) * CreateTranslationMatrix(-p);
-        }
-
-        static public Matrix CreateZAxisRotationMatrix(double radians)
+        static public Matrix4 CreateZAxisRotationMatrix(double radians)
         {
             return Create4x4Matrix(Math.Cos(radians), -Math.Sin(radians), 0, 0,
                     Math.Sin(radians), Math.Cos(radians), 0, 0,
@@ -269,26 +216,9 @@ namespace CGLearn.CG
 
         }
 
-        static public Matrix CreateZAxisRotationMatrixAroundPoint(double angleInRadians, Vector p)
+        static public Matrix4 CreatePerspectiveProjectionMatrix(double fovy, double aspect, double znear, double zfar)
         {
-            return CreateTranslationMatrix(p) * CreateZAxisRotationMatrix(angleInRadians) * CreateTranslationMatrix(-p);
-        }
-
-        static public Matrix CreateOrthogonalProjectionMatrix(int x, int y, int viewportWidth, int viewportHeight)
-        {
-            return 
-                CreateTranslationMatrix(x, y, 0) *
-                CreateScaleMatrix(viewportWidth / 2, viewportHeight / 2, 1) * 
-                Create4x4Matrix(
-                    1, 0, 0, 0,
-                    0, 1, 0, 0,
-                    0, 0, 1, 0,
-                    0, 0, 0, 1);
-        }
-
-        static public Matrix CreatePerspectiveProjectionMatrix(double fovy, double aspect, double znear, double zfar)
-        {
-            Matrix result = new Matrix(4, 4);
+            Matrix4 result = new Matrix4();
             double f = 1.0 / Math.Tan(fovy / 2),
             nf = 1 / (znear - zfar);
             result.matrix_[0] = f / aspect;
@@ -311,46 +241,43 @@ namespace CGLearn.CG
             return result;
         }
 
-        static public Matrix CreateViewportMatrix(int cX, int cY, int viewportWidth, int viewportHeight)
+        static public Matrix4 CreateViewportMatrix(int cX, int cY, int viewportWidth, int viewportHeight)
         {
             return CreateTranslationMatrix(cX, cY, 0) * CreateScaleMatrix(viewportWidth / 2, viewportHeight / 2, 1);
         }
 
-        static public Matrix CreateViewMatrix(Vector cameraPosition, Vector observedPoint, Vector upDirection)
+        static public Matrix4 CreateViewMatrix(Vector3 cameraPosition, Vector3 observedPoint, Vector3 upDirection)
         {
-            Vector cameraVector = cameraPosition;
-            Vector zAxis = (cameraVector - observedPoint ).Normalize();
-            Vector xAxis = upDirection.Cross(zAxis).Normalize();
-            Vector yAxis = zAxis.Cross(xAxis).Normalize();
+            Vector3 cameraVector = cameraPosition;
+            Vector3 zAxis = (cameraVector - observedPoint ).Normalize();
+            Vector3 xAxis = upDirection.Cross(zAxis).Normalize();
+            Vector3 yAxis = zAxis.Cross(xAxis).Normalize();
 
-            Matrix result =  CreateIdentityMatrix(4);
+            Matrix4 result =  CreateIdentityMatrix();
 
-            result.SetElement(0, 0, xAxis.x_);
-            result.SetElement(0, 1, xAxis.y_);
-            result.SetElement(0, 2, xAxis.z_);
+            result.matrix_[0] = xAxis.x_;
+            result.matrix_[1] = xAxis.y_;
+            result.matrix_[2] = xAxis.z_;
 
-            result.SetElement(1, 0, yAxis.x_);
-            result.SetElement(1, 1, yAxis.y_);
-            result.SetElement(1, 2, yAxis.z_);
+            result.matrix_[4] = yAxis.x_;
+            result.matrix_[5] = yAxis.y_;
+            result.matrix_[6] = yAxis.z_;
 
-            result.SetElement(2, 0, zAxis.x_);
-            result.SetElement(2, 1, zAxis.y_);
-            result.SetElement(2, 2, zAxis.z_);
+            result.matrix_[8]=  zAxis.x_;
+            result.matrix_[9] =  zAxis.y_;
+            result.matrix_[10] = zAxis.z_;
 
-            result.SetElement(0, 3, -xAxis.Dot(cameraVector));
-            result.SetElement(1, 3, -yAxis.Dot(cameraVector));
-            result.SetElement(2, 3, -zAxis.Dot(cameraVector));
+            result.matrix_[3] = -xAxis.Dot(cameraVector);
+            result.matrix_[7] = -yAxis.Dot(cameraVector);
+            result.matrix_[11] = -zAxis.Dot(cameraVector);
 
             return result;
         }
 
-        Matrix Clone()
+        Matrix4 Clone()
         {
-            Matrix result = new Matrix(width_, height_);
-            for(int i = 0; i < width_*height_; i++)
-            {
-                result.matrix_[i] = matrix_[i];
-            }
+            Matrix4 result = new Matrix4();
+            Array.Copy(matrix_, result.matrix_, 16);
             return result;
         }
 
@@ -379,7 +306,7 @@ namespace CGLearn.CG
             return b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
         }
 
-        public Matrix Invert4x4Matrix()
+        public Matrix4 Invert4x4Matrix()
         {
             double a00 = matrix_[0], a01 = matrix_[1], a02 = matrix_[2], a03 = matrix_[3],
             a10 = matrix_[4], a11 = matrix_[5], a12 = matrix_[6], a13 = matrix_[7],
@@ -408,7 +335,7 @@ namespace CGLearn.CG
             }
             det = 1.0 / det;
 
-            Matrix result = this.Clone();
+            Matrix4 result = this.Clone();
 
             result.matrix_[0] = (a11 * b11 - a12 * b10 + a13 * b09) * det;
             result.matrix_[1] = (a02 * b10 - a01 * b11 - a03 * b09) * det;

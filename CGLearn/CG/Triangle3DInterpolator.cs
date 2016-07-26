@@ -9,14 +9,14 @@ namespace CGLearn.CG
 
     struct Triangle2DInterpolator
     {
-        public Vector p1_;
-        public Vector p1Value_;
+        public Vector3 p1_;
+        public Vector3 p1Value_;
 
-        public Vector p2_;
-        public Vector p2Value_;
+        public Vector3 p2_;
+        public Vector3 p2Value_;
 
-        public Vector p3_;
-        public Vector p3Value_;
+        public Vector3 p3_;
+        public Vector3 p3Value_;
 
         public double p2y_p3y;
         public double p3y_p1y;
@@ -27,19 +27,19 @@ namespace CGLearn.CG
 
         //public Matrix transform;
 
-        public void SetVector1(Vector p, Vector value)
+        public void SetVector1(Vector3 p, Vector3 value)
         {
             p1_ = p;
             p1Value_ = value;
         }
 
-        public void SetVector2(Vector p, Vector value)
+        public void SetVector2(Vector3 p, Vector3 value)
         {
             p2_ = p;
             p2Value_ = value;
         }
 
-        public void SetVector3(Vector p, Vector value)
+        public void SetVector3(Vector3 p, Vector3 value)
         {
             p3_ = p;
             p3Value_ = value;
@@ -56,14 +56,14 @@ namespace CGLearn.CG
     }
     struct Triangle3DInterpolator
     {
-        public Vector p1_;
-        public Vector p1Value_;
+        public Vector3 p1_;
+        public Vector3 p1Value_;
 
-        public Vector p2_;
-        public Vector p2Value_;
+        public Vector3 p2_;
+        public Vector3 p2Value_;
 
-        public Vector p3_;
-        public Vector p3Value_;
+        public Vector3 p3_;
+        public Vector3 p3Value_;
 
         public double p2y_p3y;
         public double p3y_p1y;
@@ -72,21 +72,21 @@ namespace CGLearn.CG
 
         public double den;
 
-        public Matrix transform;
+        public Matrix4 transform;
 
-        public void SetVector1(Vector p, Vector value)
+        public void SetVector1(Vector3 p, Vector3 value)
         {
             p1_ = p;
             p1Value_ = value;
         }
 
-        public void SetVector2(Vector p, Vector value)
+        public void SetVector2(Vector3 p, Vector3 value)
         {
             p2_ = p;
             p2Value_ = value;
         }
 
-        public void SetVector3(Vector p, Vector value)
+        public void SetVector3(Vector3 p, Vector3 value)
         {
             p3_ = p;
             p3Value_ = value;
@@ -95,11 +95,11 @@ namespace CGLearn.CG
         public void PreCalculate()
         {
             //把三角形投影到一个平面上
-            Vector zAxis = ((p2_ - p1_).Cross(p3_ - p1_)).Normalize();
-            Vector xAxis = (p2_ - p1_).Cross(zAxis).Normalize();
-            Vector yAxis = zAxis.Cross(xAxis).Normalize();
+            Vector3 zAxis = ((p2_ - p1_).Cross(p3_ - p1_)).Normalize();
+            Vector3 xAxis = (p2_ - p1_).Cross(zAxis).Normalize();
+            Vector3 yAxis = zAxis.Cross(xAxis).Normalize();
 
-            transform = Matrix.CreateIdentityMatrix(4);
+            transform = Matrix4.CreateIdentityMatrix();
 
             transform.SetElement(0, 0, xAxis.x_);
             transform.SetElement(0, 1, xAxis.y_);

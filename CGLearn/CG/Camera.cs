@@ -8,14 +8,14 @@ namespace CGLearn.CG
 {
     class Camera
     {
-        public Vector position;
-        public Vector upDirection;
-        public Vector target;
+        public Vector3 position;
+        public Vector3 upDirection;
+        public Vector3 target;
 
         double zmin;
         double zmax;
 
-        public Camera(Vector pos, Vector up, Vector tar, double zmin, double zmax)
+        public Camera(Vector3 pos, Vector3 up, Vector3 tar, double zmin, double zmax)
         {
             position = pos;
             upDirection = up;
@@ -24,9 +24,9 @@ namespace CGLearn.CG
             this.zmax = zmax;
         }
 
-        public Matrix GetViewMatrix()
+        public Matrix4 GetViewMatrix()
         {
-            return Matrix.CreateViewMatrix(position, target, upDirection);
+            return Matrix4.CreateViewMatrix(position, target, upDirection);
         }
 
     }
